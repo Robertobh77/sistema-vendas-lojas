@@ -20,9 +20,9 @@ def get_operadores():
         
         result = []
         for operador in operadores:
-            # Buscar vendas do operador no mês atual
-            vendas_response = supabase.table("vendas").select("valor_venda").eq("operador_id", operador["id"]).execute()
-            tarifa_acumulada = sum(venda["valor_venda"] or 0 for venda in vendas_response.data)
+            # Buscar vendas do operador no mês atual (usando valor_comissao para cálculo)
+            vendas_response = supabase.table("vendas").select("valor_comissao").eq("operador_id", operador["id"]).execute()
+            tarifa_acumulada = sum(venda["valor_comissao"] or 0 for venda in vendas_response.data)
             
             # Calcular percentual da meta
             meta_mensal = operador["meta_mensal"] or 0

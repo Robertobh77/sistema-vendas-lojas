@@ -10,6 +10,7 @@ from src.routes.lojas import lojas_bp
 from src.routes.operadores import operadores_bp
 from src.routes.vendas import vendas_bp
 from src.routes.upload import upload_bp
+from src.routes.auth import auth_bp
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
 app.config.from_object(Config)
@@ -22,6 +23,7 @@ app.register_blueprint(lojas_bp, url_prefix='/api')
 app.register_blueprint(operadores_bp, url_prefix='/api')
 app.register_blueprint(vendas_bp, url_prefix='/api')
 app.register_blueprint(upload_bp, url_prefix='/api')
+app.register_blueprint(auth_bp, url_prefix='/api')
 
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')

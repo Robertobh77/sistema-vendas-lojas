@@ -18,9 +18,9 @@ def get_lojas():
             operadores_response = supabase.table("operadores").select("*").eq("loja_id", loja["id"]).eq("ativo", True).execute()
             operadores = operadores_response.data
             
-            # Calcular vendas totais da loja no mês atual
-            vendas_response = supabase.table("vendas").select("valor_venda").eq("loja_id", loja["id"]).execute()
-            vendas_total = sum(venda["valor_venda"] or 0 for venda in vendas_response.data)
+            # Calcular vendas totais da loja no mês atual (usando valor_comissao)
+            vendas_response = supabase.table("vendas").select("valor_comissao").eq("loja_id", loja["id"]).execute()
+            vendas_total = sum(venda["valor_comissao"] or 0 for venda in vendas_response.data)
             
             # Calcular meta total da loja (soma das metas dos operadores)
             meta_total = sum(op["meta_mensal"] or 0 for op in operadores)

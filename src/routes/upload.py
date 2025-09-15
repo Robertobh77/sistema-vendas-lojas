@@ -161,13 +161,13 @@ def upload_csv():
                 loja = get_or_create_loja(nome_funcionario)
                 operador = get_or_create_operador(nome_funcionario, loja["id"])
                 
-                # Inserir venda
+                # Inserir venda (usando valor_comissao como base para cálculo das metas)
                 supabase.table("vendas").insert({
                     "data_venda": data_venda,
                     "operador_id": operador["id"],
                     "loja_id": loja["id"],
                     "valor_custo": valor_custo,
-                    "valor_comissao": valor_comissao,
+                    "valor_comissao": valor_comissao,  # Esta é a coluna principal para cálculo
                     "valor_venda": valor_venda
                 }).execute()
                 
