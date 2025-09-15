@@ -6,10 +6,31 @@ supabase = get_supabase_client()
 
 @lojas_bp.route('/lojas', methods=['GET'])
 def get_lojas():
-    """Retorna todas as lojas com suas métricas"""
+    """Retorna todas as lojas com suas métricas (público para visualização)"""
     try:
-        # Buscar todas as lojas
-        lojas_response = supabase.table("lojas").select("*").execute()
+        # Verificar se há token para filtrar por loja (opcional)
+        token = request.headers.get('Authorization')
+        current_user = None
+        
+        if token:
+            try:
+                if token.startswith('Bearer '):
+                    token = token[7:]
+                
+                import jwt
+                data = jwt.decode(token, 'sua-chave-secreta', algorithms=['HS256'])
+                user_response = supabase.table("usuarios").select("*").eq("id", data['user_id']).execute()
+                if user_response.data:
+                    current_user = user_response.data[0]
+            except:
+                pass  # Token inválido, continuar sem filtro
+        
+        # Buscar todas as lojas ou filtrar por loja do gerente
+        if current_user and current_user['tipo'] == 'gerente' and current_user.get('loja_id'):
+            lojas_response = supabase.table("lojas").select("*").eq("id", current_user['loja_id']).execute()
+        else:
+            lojas_response = supabase.table("lojas").select("*").execute()
+        
         lojas = lojas_response.data
         
         result = []
