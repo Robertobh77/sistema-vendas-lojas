@@ -36,4 +36,4 @@ supabase_functions==0.10.1
 typing-inspection==0.4.1
 typing_extensions==4.14.0
 websockets==15.0.1
-Werkzeug==2.3.7
+Werkzeug==3.1.3
