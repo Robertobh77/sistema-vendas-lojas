@@ -56,7 +56,11 @@ def create_loja():
         
         response = supabase.table("lojas").insert({
             "nome": data["nome"],
-            "meta_mensal": data.get("meta_mensal", 0)
+            "meta_mensal": data.get("meta_mensal", 0),
+            "endereco": data.get("endereco", ""),
+            "telefone": data.get("telefone", ""),
+            "email": data.get("email", ""),
+            "observacoes": data.get("observacoes", "")
         }).execute()
         
         return jsonify(response.data[0]), 201
@@ -72,7 +76,11 @@ def update_loja(loja_id):
         
         response = supabase.table("lojas").update({
             "nome": data.get("nome"),
-            "meta_mensal": data.get("meta_mensal")
+            "meta_mensal": data.get("meta_mensal"),
+            "endereco": data.get("endereco"),
+            "telefone": data.get("telefone"),
+            "email": data.get("email"),
+            "observacoes": data.get("observacoes")
         }).eq("id", loja_id).execute()
         
         return jsonify(response.data[0])

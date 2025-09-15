@@ -1,21 +1,28 @@
 from flask import Blueprint, jsonify, request
 from src.database import get_supabase_client
+from src.routes.auth import token_required
 
 operadores_bp = Blueprint('operadores', __name__)
 supabase = get_supabase_client()
 
 @operadores_bp.route('/operadores', methods=['GET'])
-def get_operadores():
-    """Retorna todos os operadores com suas métricas"""
+@token_required
+def get_operadores(current_user):
+    """Retorna operadores com suas métricas (filtrado por loja para gerentes)"""
     try:
-        # Buscar operadores com informações da loja
-        operadores_response = supabase.table("operadores").select("""
+        # Construir query baseado no tipo de usuário
+        query = supabase.table("operadores").select("""
             *,
             lojas (
                 nome
             )
-        """).eq("ativo", True).execute()
+        """).eq("ativo", True)
         
+        # Se for gerente, filtrar apenas operadores da sua loja
+        if current_user['tipo'] == 'gerente' and current_user.get('loja_id'):
+            query = query.eq("loja_id", current_user['loja_id'])
+        
+        operadores_response = query.execute()
         operadores = operadores_response.data
         
         result = []
@@ -56,10 +63,17 @@ def get_operadores():
         return jsonify({"error": str(e)}), 500
 
 @operadores_bp.route('/operadores', methods=['POST'])
-def create_operador():
-    """Cria um novo operador"""
+@token_required
+def create_operador(current_user):
+    """Cria um novo operador (apenas admin ou gerente da loja)"""
     try:
         data = request.get_json()
+        
+        # Verificar permissões
+        if current_user['tipo'] == 'gerente':
+            # Gerente só pode criar operadores na sua loja
+            if current_user.get('loja_id') != data.get('loja_id'):
+                return jsonify({'message': 'Acesso negado'}), 403
         
         response = supabase.table("operadores").insert({
             "nome": data["nome"],
@@ -74,10 +88,23 @@ def create_operador():
         return jsonify({"error": str(e)}), 500
 
 @operadores_bp.route('/operadores/<int:operador_id>', methods=['PUT'])
-def update_operador(operador_id):
-    """Atualiza um operador"""
+@token_required
+def update_operador(current_user, operador_id):
+    """Atualiza um operador (apenas admin ou gerente da loja)"""
     try:
         data = request.get_json()
+        
+        # Verificar se operador existe e permissões
+        operador_response = supabase.table("operadores").select("*").eq("id", operador_id).execute()
+        if not operador_response.data:
+            return jsonify({'message': 'Operador não encontrado'}), 404
+        
+        operador = operador_response.data[0]
+        
+        if current_user['tipo'] == 'gerente':
+            # Gerente só pode editar operadores da sua loja
+            if current_user.get('loja_id') != operador['loja_id']:
+                return jsonify({'message': 'Acesso negado'}), 403
         
         response = supabase.table("operadores").update({
             "nome": data.get("nome"),
@@ -92,9 +119,22 @@ def update_operador(operador_id):
         return jsonify({"error": str(e)}), 500
 
 @operadores_bp.route('/operadores/<int:operador_id>', methods=['DELETE'])
-def delete_operador(operador_id):
-    """Desativa um operador (soft delete)"""
+@token_required
+def delete_operador(current_user, operador_id):
+    """Desativa um operador (apenas admin ou gerente da loja)"""
     try:
+        # Verificar se operador existe e permissões
+        operador_response = supabase.table("operadores").select("*").eq("id", operador_id).execute()
+        if not operador_response.data:
+            return jsonify({'message': 'Operador não encontrado'}), 404
+        
+        operador = operador_response.data[0]
+        
+        if current_user['tipo'] == 'gerente':
+            # Gerente só pode desativar operadores da sua loja
+            if current_user.get('loja_id') != operador['loja_id']:
+                return jsonify({'message': 'Acesso negado'}), 403
+        
         response = supabase.table("operadores").update({
             "ativo": False
         }).eq("id", operador_id).execute()

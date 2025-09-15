@@ -6,7 +6,7 @@ import LojasOverview from './LojasOverview';
 import { vendasAPI, operadoresAPI, lojasAPI } from '@/lib/api';
 import { TrendingUp, Users, Store, DollarSign, Target } from 'lucide-react';
 
-const Dashboard = () => {
+const Dashboard = ({ user }) => {
   const [stats, setStats] = useState({
     totalOperadores: 0,
     totalLojas: 0,
