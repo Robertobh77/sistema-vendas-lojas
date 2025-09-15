@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const DashboardBonito = () => {
+const DashboardBonito = ({ user }) => {
   const [dados, setDados] = useState({
     funcionarios: [],
     resumo: {
@@ -17,7 +17,12 @@ const DashboardBonito = () => {
   useEffect(() => {
     fetchDados();
     fetchLojas();
-  }, []);
+    
+    // Se for gerente, filtrar automaticamente pela sua loja
+    if (user?.tipo === 'gerente' && user?.loja_nome) {
+      setFiltroLoja(user.loja_nome);
+    }
+  }, [user]);
 
   const fetchLojas = async () => {
     try {
@@ -137,34 +142,36 @@ const DashboardBonito = () => {
         </p>
       </div>
 
-      {/* Filtro */}
-      <div style={{
-        marginBottom: '30px',
-        display: 'flex',
-        justifyContent: 'center'
-      }}>
-        <select
-          value={filtroLoja}
-          onChange={(e) => setFiltroLoja(e.target.value)}
-          style={{
-            padding: '12px 20px',
-            borderRadius: '25px',
-            border: '2px solid #3498db',
-            fontSize: '16px',
-            backgroundColor: 'white',
-            color: '#2c3e50',
-            cursor: 'pointer',
-            minWidth: '200px'
-          }}
-        >
-          <option value="">🏪 Todas as Lojas</option>
-          {lojas.map(loja => (
-            <option key={loja.id} value={loja.nome}>
-              {loja.nome}
-            </option>
-          ))}
-        </select>
-      </div>
+      {/* Filtro - apenas para admin */}
+      {user?.tipo === 'admin' && (
+        <div style={{
+          marginBottom: '30px',
+          display: 'flex',
+          justifyContent: 'center'
+        }}>
+          <select
+            value={filtroLoja}
+            onChange={(e) => setFiltroLoja(e.target.value)}
+            style={{
+              padding: '12px 20px',
+              borderRadius: '25px',
+              border: '2px solid #3498db',
+              fontSize: '16px',
+              backgroundColor: 'white',
+              color: '#2c3e50',
+              cursor: 'pointer',
+              minWidth: '200px'
+            }}
+          >
+            <option value="">🏪 Todas as Lojas</option>
+            {lojas.map(loja => (
+              <option key={loja.id} value={loja.nome}>
+                {loja.nome}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {/* Cards de Resumo */}
       <div style={{
