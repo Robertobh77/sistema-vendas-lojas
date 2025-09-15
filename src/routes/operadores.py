@@ -6,26 +6,10 @@ operadores_bp = Blueprint('operadores', __name__)
 supabase = get_supabase_client()
 
 @operadores_bp.route('/operadores', methods=['GET'])
-def get_operadores():
-    """Retorna operadores com suas métricas (público para visualização)"""
+@token_required
+def get_operadores(current_user):
+    """Retorna operadores com suas métricas (filtrado por loja para gerentes)"""
     try:
-        # Verificar se há token para filtrar por loja (opcional)
-        token = request.headers.get('Authorization')
-        current_user = None
-        
-        if token:
-            try:
-                if token.startswith('Bearer '):
-                    token = token[7:]
-                
-                import jwt
-                data = jwt.decode(token, 'sua-chave-secreta', algorithms=['HS256'])
-                user_response = supabase.table("usuarios").select("*").eq("id", data['user_id']).execute()
-                if user_response.data:
-                    current_user = user_response.data[0]
-            except:
-                pass  # Token inválido, continuar sem filtro
-        
         # Construir query baseado no tipo de usuário
         query = supabase.table("operadores").select("""
             *,
@@ -35,7 +19,7 @@ def get_operadores():
         """).eq("ativo", True)
         
         # Se for gerente, filtrar apenas operadores da sua loja
-        if current_user and current_user['tipo'] == 'gerente' and current_user.get('loja_id'):
+        if current_user['tipo'] == 'gerente' and current_user.get('loja_id'):
             query = query.eq("loja_id", current_user['loja_id'])
         
         operadores_response = query.execute()

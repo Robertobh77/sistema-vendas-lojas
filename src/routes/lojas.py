@@ -1,32 +1,17 @@
 from flask import Blueprint, jsonify, request
 from src.database import get_supabase_client
+from src.routes.auth import token_required
 
 lojas_bp = Blueprint('lojas', __name__)
 supabase = get_supabase_client()
 
 @lojas_bp.route('/lojas', methods=['GET'])
-def get_lojas():
-    """Retorna todas as lojas com suas métricas (público para visualização)"""
+@token_required
+def get_lojas(current_user):
+    """Retorna lojas com suas métricas (filtrado por loja para gerentes)"""
     try:
-        # Verificar se há token para filtrar por loja (opcional)
-        token = request.headers.get('Authorization')
-        current_user = None
-        
-        if token:
-            try:
-                if token.startswith('Bearer '):
-                    token = token[7:]
-                
-                import jwt
-                data = jwt.decode(token, 'sua-chave-secreta', algorithms=['HS256'])
-                user_response = supabase.table("usuarios").select("*").eq("id", data['user_id']).execute()
-                if user_response.data:
-                    current_user = user_response.data[0]
-            except:
-                pass  # Token inválido, continuar sem filtro
-        
-        # Buscar todas as lojas ou filtrar por loja do gerente
-        if current_user and current_user['tipo'] == 'gerente' and current_user.get('loja_id'):
+        # Buscar lojas baseado no tipo de usuário
+        if current_user['tipo'] == 'gerente' and current_user.get('loja_id'):
             lojas_response = supabase.table("lojas").select("*").eq("id", current_user['loja_id']).execute()
         else:
             lojas_response = supabase.table("lojas").select("*").execute()
