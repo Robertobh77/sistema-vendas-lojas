@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import CadastroFuncionariosSimples from './components/CadastroFuncionariosSimples';
 import ImportacaoCSVSimples from './components/ImportacaoCSVSimples';
+import DashboardBonito from './components/DashboardBonito';
 
 const AppSimples = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('funcionarios');
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [loginData, setLoginData] = useState({
     email: 'admin@grandepremioloterias.com.br',
     senha: 'admin123'
@@ -187,38 +188,61 @@ const AppSimples = () => {
       <nav style={{
         backgroundColor: '#f8f9fa',
         padding: '10px 20px',
-        borderBottom: '1px solid #dee2e6'
+        borderBottom: '1px solid #dee2e6',
+        overflowX: 'auto'
       }}>
-        <button
-          onClick={() => setActiveTab('funcionarios')}
-          style={{
-            backgroundColor: activeTab === 'funcionarios' ? '#007bff' : 'transparent',
-            color: activeTab === 'funcionarios' ? 'white' : '#007bff',
-            border: '1px solid #007bff',
-            padding: '8px 16px',
-            marginRight: '10px',
-            borderRadius: '4px',
-            cursor: 'pointer'
-          }}
-        >
-          👥 Funcionários
-        </button>
-        <button
-          onClick={() => setActiveTab('importacao')}
-          style={{
-            backgroundColor: activeTab === 'importacao' ? '#007bff' : 'transparent',
-            color: activeTab === 'importacao' ? 'white' : '#007bff',
-            border: '1px solid #007bff',
-            padding: '8px 16px',
-            borderRadius: '4px',
-            cursor: 'pointer'
-          }}
-        >
-          📁 Importar CSV
-        </button>
+        <div style={{
+          display: 'flex',
+          gap: '10px',
+          minWidth: 'max-content'
+        }}>
+          <button
+            onClick={() => setActiveTab('dashboard')}
+            style={{
+              backgroundColor: activeTab === 'dashboard' ? '#007bff' : 'transparent',
+              color: activeTab === 'dashboard' ? 'white' : '#007bff',
+              border: '1px solid #007bff',
+              padding: '8px 16px',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            📊 Dashboard
+          </button>
+          <button
+            onClick={() => setActiveTab('funcionarios')}
+            style={{
+              backgroundColor: activeTab === 'funcionarios' ? '#007bff' : 'transparent',
+              color: activeTab === 'funcionarios' ? 'white' : '#007bff',
+              border: '1px solid #007bff',
+              padding: '8px 16px',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            👥 Funcionários
+          </button>
+          <button
+            onClick={() => setActiveTab('importacao')}
+            style={{
+              backgroundColor: activeTab === 'importacao' ? '#007bff' : 'transparent',
+              color: activeTab === 'importacao' ? 'white' : '#007bff',
+              border: '1px solid #007bff',
+              padding: '8px 16px',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            📁 Importar CSV
+          </button>
+        </div>
       </nav>
       
       <main>
+        {activeTab === 'dashboard' && <DashboardBonito />}
         {activeTab === 'funcionarios' && <CadastroFuncionariosSimples />}
         {activeTab === 'importacao' && <ImportacaoCSVSimples />}
       </main>

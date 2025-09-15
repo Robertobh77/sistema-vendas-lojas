@@ -8,6 +8,7 @@ from flask_cors import CORS
 from src.config import Config
 from src.routes.lojas import lojas_bp
 from src.routes.operadores import operadores_bp
+from src.routes.operadores_dashboard import operadores_dashboard_bp
 from src.routes.vendas import vendas_bp
 from src.routes.upload import upload_bp
 from src.routes.upload_simples import upload_simples_bp
@@ -22,6 +23,7 @@ CORS(app)
 # Registrar blueprints
 app.register_blueprint(lojas_bp, url_prefix='/api')
 app.register_blueprint(operadores_bp, url_prefix='/api')
+app.register_blueprint(operadores_dashboard_bp, url_prefix='/api')
 app.register_blueprint(vendas_bp, url_prefix='/api')
 app.register_blueprint(upload_bp, url_prefix='/api')
 app.register_blueprint(upload_simples_bp, url_prefix='/api')
