@@ -62,6 +62,23 @@ def get_operadores(current_user):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@operadores_bp.route('/operadores/simples', methods=['POST'])
+def create_operador_simples():
+    """Cria operador sem autenticação - FASE 1"""
+    try:
+        data = request.get_json()
+        
+        result = supabase.table("operadores").insert({
+            "nome": data["nome"],
+            "loja_id": data["loja_id"],
+            "meta_mensal": data.get("meta_mensal", 2000),
+            "ativo": data.get("ativo", True)
+        }).execute()
+        
+        return jsonify(result.data[0]), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @operadores_bp.route('/operadores', methods=['POST'])
 @token_required
 def create_operador(current_user):

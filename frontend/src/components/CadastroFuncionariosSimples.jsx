@@ -47,7 +47,7 @@ const CadastroFuncionariosSimples = () => {
     setMessage('');
 
     try {
-      const response = await fetch('/api/operadores', {
+      const response = await fetch('/api/operadores/simples', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
