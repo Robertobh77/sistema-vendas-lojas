@@ -14,6 +14,7 @@ function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [forceLogin, setForceLogin] = useState(false);
 
   useEffect(() => {
     // Simular loading inicial
@@ -26,14 +27,22 @@ function App() {
 
   const handleLogin = (userData) => {
     setUser(userData);
+    setForceLogin(false);
     setActiveTab('dashboard');
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    // Limpar tudo
+    localStorage.clear();
+    sessionStorage.clear();
     setUser(null);
+    setForceLogin(true);
     setActiveTab('dashboard');
+    
+    // Forçar reload da página para garantir limpeza completa
+    setTimeout(() => {
+      window.location.reload();
+    }, 100);
   };
 
   if (loading) {
@@ -47,38 +56,57 @@ function App() {
     );
   }
 
-  // Se não há usuário logado, mostrar tela de login
-  if (!user) {
+  // Se não há usuário logado OU forceLogin é true, mostrar tela de login
+  if (!user || forceLogin) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="w-full max-w-md">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Sistema de Vendas
-            </h1>
-            <p className="text-gray-600">
-              Faça login para acessar o sistema
-            </p>
+      <div className="min-h-screen bg-gray-50">
+        {/* Header com botão sair sempre visível */}
+        <header className="bg-white shadow-sm border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <div className="flex items-center">
+                <TrendingUp className="h-8 w-8 text-blue-600 mr-3" />
+                <h1 className="text-xl font-semibold text-gray-900">
+                  Sistema de Acompanhamento de Vendas
+                </h1>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleLogout}
+                className="flex items-center space-x-2 bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Limpar e Sair</span>
+              </Button>
+            </div>
           </div>
-          <Login onLogin={handleLogin} />
+        </header>
+
+        {/* Tela de Login */}
+        <div className="flex items-center justify-center py-12">
+          <div className="w-full max-w-md">
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                Acesso ao Sistema
+              </h1>
+              <p className="text-gray-600">
+                Faça login para acessar o sistema de vendas
+              </p>
+              <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                <p className="text-sm text-blue-800 font-medium">Credenciais de Teste:</p>
+                <p className="text-sm text-blue-700">Email: admin@grandepremioloterias.com.br</p>
+                <p className="text-sm text-blue-700">Senha: admin123</p>
+              </div>
+            </div>
+            <Login onLogin={handleLogin} />
+          </div>
         </div>
       </div>
     );
   }
 
-  // Determinar abas disponíveis baseado no tipo de usuário
-  const availableTabs = [
-    { id: 'dashboard', label: 'Dashboard', icon: TrendingUp },
-    { id: 'operadores', label: 'Operadores', icon: Users },
-    { id: 'lojas', label: 'Lojas', icon: Store },
-    { id: 'upload', label: 'Upload CSV', icon: Upload },
-  ];
-
-  // Adicionar aba de usuários apenas para admin
-  if (user.tipo === 'admin') {
-    availableTabs.push({ id: 'usuarios', label: 'Usuários', icon: UserPlus });
-  }
-
+  // Sistema logado - mostrar dashboard
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -109,7 +137,7 @@ function App() {
                 variant="outline"
                 size="sm"
                 onClick={handleLogout}
-                className="flex items-center space-x-2"
+                className="flex items-center space-x-2 bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
               >
                 <LogOut className="h-4 w-4" />
                 <span>Sair</span>
@@ -123,16 +151,28 @@ function App() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-4 lg:grid-cols-5 mb-8">
-            {availableTabs.map((tab) => (
-              <TabsTrigger
-                key={tab.id}
-                value={tab.id}
-                className="flex items-center space-x-2"
-              >
-                <tab.icon className="h-4 w-4" />
-                <span className="hidden sm:inline">{tab.label}</span>
+            <TabsTrigger value="dashboard" className="flex items-center space-x-2">
+              <TrendingUp className="h-4 w-4" />
+              <span className="hidden sm:inline">Dashboard</span>
+            </TabsTrigger>
+            <TabsTrigger value="operadores" className="flex items-center space-x-2">
+              <Users className="h-4 w-4" />
+              <span className="hidden sm:inline">Operadores</span>
+            </TabsTrigger>
+            <TabsTrigger value="lojas" className="flex items-center space-x-2">
+              <Store className="h-4 w-4" />
+              <span className="hidden sm:inline">Lojas</span>
+            </TabsTrigger>
+            <TabsTrigger value="upload" className="flex items-center space-x-2">
+              <Upload className="h-4 w-4" />
+              <span className="hidden sm:inline">Upload CSV</span>
+            </TabsTrigger>
+            {user.tipo === 'admin' && (
+              <TabsTrigger value="usuarios" className="flex items-center space-x-2">
+                <UserPlus className="h-4 w-4" />
+                <span className="hidden sm:inline">Usuários</span>
               </TabsTrigger>
-            ))}
+            )}
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-6">
