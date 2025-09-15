@@ -49,19 +49,28 @@ const CadastroFuncionarios = ({ user }) => {
     setLoading(true);
 
     try {
-      const payload = {
+      const dataToSend = {
         ...formData,
+        loja_id: parseInt(formData.loja_id),
         meta_mensal: parseFloat(formData.meta_mensal)
       };
 
       if (editingFuncionario) {
-        await api.put(`/api/operadores/${editingFuncionario.id}`, payload);
+        await operadoresAPI.update(editingFuncionario.id, dataToSend);
       } else {
-        await api.post('/api/operadores', payload);
+        await operadoresAPI.create(dataToSend);
       }
       
-      await fetchFuncionarios();
-      resetForm();
+      setShowForm(false);
+      setEditingFuncionario(null);
+      setFormData({
+        nome: '',
+        loja_id: '',
+        cargo: 'operador',
+        meta_mensal: 2000,
+        ativo: true
+      });
+      fetchFuncionarios();
     } catch (error) {
       console.error('Erro ao salvar funcionário:', error);
       alert('Erro ao salvar funcionário. Tente novamente.');
@@ -73,7 +82,7 @@ const CadastroFuncionarios = ({ user }) => {
   const handleEdit = (funcionario) => {
     setEditingFuncionario(funcionario);
     setFormData({
-      nome: funcionario.nome,
+      nome: funcionario.nome || '',
       loja_id: funcionario.loja_id?.toString() || '',
       cargo: funcionario.cargo || 'operador',
       meta_mensal: funcionario.meta_mensal || 2000,
@@ -83,18 +92,20 @@ const CadastroFuncionarios = ({ user }) => {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Tem certeza que deseja excluir este funcionário?')) return;
-
-    try {
-      await api.delete(`/api/operadores/${id}`);
-      await fetchFuncionarios();
-    } catch (error) {
-      console.error('Erro ao excluir funcionário:', error);
-      alert('Erro ao excluir funcionário. Tente novamente.');
+    if (window.confirm('Tem certeza que deseja excluir este funcionário?')) {
+      try {
+        await operadoresAPI.delete(id);
+        fetchFuncionarios();
+      } catch (error) {
+        console.error('Erro ao excluir funcionário:', error);
+        alert('Erro ao excluir funcionário. Tente novamente.');
+      }
     }
   };
 
-  const resetForm = () => {
+  const handleCancel = () => {
+    setShowForm(false);
+    setEditingFuncionario(null);
     setFormData({
       nome: '',
       loja_id: '',
@@ -102,44 +113,32 @@ const CadastroFuncionarios = ({ user }) => {
       meta_mensal: 2000,
       ativo: true
     });
-    setEditingFuncionario(null);
-    setShowForm(false);
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === 'checkbox' ? checked : value
-    });
-  };
-
-  const handleSelectChange = (name, value) => {
-    setFormData({
-      ...formData,
-      [name]: value
-    });
   };
 
   const getLojaName = (lojaId) => {
     const loja = lojas.find(l => l.id === lojaId);
-    return loja ? loja.nome : 'Loja não encontrada';
+    return loja ? loja.nome : 'N/A';
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <Users className="h-6 w-6 text-blue-600" />
-          <h2 className="text-2xl font-bold text-gray-900">Cadastro de Funcionários</h2>
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <Users className="h-6 w-6" />
+            Cadastro de Funcionários
+          </h2>
+          <p className="text-gray-600 mt-1">Gerencie os funcionários do sistema</p>
         </div>
-        <Button onClick={() => setShowForm(true)} className="flex items-center space-x-2">
+        <Button 
+          onClick={() => setShowForm(true)}
+          className="flex items-center gap-2"
+        >
           <Plus className="h-4 w-4" />
-          <span>Novo Funcionário</span>
+          Novo Funcionário
         </Button>
       </div>
 
-      {/* Formulário */}
       {showForm && (
         <Card>
           <CardHeader>
@@ -154,18 +153,16 @@ const CadastroFuncionarios = ({ user }) => {
                   <Label htmlFor="nome">Nome do Funcionário *</Label>
                   <Input
                     id="nome"
-                    name="nome"
                     value={formData.nome}
-                    onChange={handleInputChange}
-                    placeholder="Ex: RENATO, ONLINE 2"
+                    onChange={(e) => setFormData({...formData, nome: e.target.value})}
                     required
                   />
                 </div>
                 <div>
-                  <Label htmlFor="loja_id">Loja *</Label>
+                  <Label htmlFor="loja">Loja *</Label>
                   <Select 
                     value={formData.loja_id} 
-                    onValueChange={(value) => handleSelectChange('loja_id', value)}
+                    onValueChange={(value) => setFormData({...formData, loja_id: value})}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione uma loja" />
@@ -186,13 +183,14 @@ const CadastroFuncionarios = ({ user }) => {
                   <Label htmlFor="cargo">Cargo</Label>
                   <Select 
                     value={formData.cargo} 
-                    onValueChange={(value) => handleSelectChange('cargo', value)}
+                    onValueChange={(value) => setFormData({...formData, cargo: value})}
                   >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="operador">Operador</SelectItem>
+                      <SelectItem value="supervisor">Supervisor</SelectItem>
                       <SelectItem value="gerente">Gerente</SelectItem>
                     </SelectContent>
                   </Select>
@@ -201,12 +199,10 @@ const CadastroFuncionarios = ({ user }) => {
                   <Label htmlFor="meta_mensal">Meta Mensal (R$)</Label>
                   <Input
                     id="meta_mensal"
-                    name="meta_mensal"
                     type="number"
                     step="0.01"
                     value={formData.meta_mensal}
-                    onChange={handleInputChange}
-                    placeholder="2000.00"
+                    onChange={(e) => setFormData({...formData, meta_mensal: e.target.value})}
                   />
                 </div>
               </div>
@@ -215,19 +211,18 @@ const CadastroFuncionarios = ({ user }) => {
                 <input
                   type="checkbox"
                   id="ativo"
-                  name="ativo"
                   checked={formData.ativo}
-                  onChange={handleInputChange}
+                  onChange={(e) => setFormData({...formData, ativo: e.target.checked})}
                   className="rounded"
                 />
                 <Label htmlFor="ativo">Funcionário ativo</Label>
               </div>
 
-              <div className="flex space-x-2">
+              <div className="flex gap-2">
                 <Button type="submit" disabled={loading}>
-                  {loading ? 'Salvando...' : (editingFuncionario ? 'Atualizar' : 'Salvar')}
+                  {loading ? 'Salvando...' : 'Salvar'}
                 </Button>
-                <Button type="button" variant="outline" onClick={resetForm}>
+                <Button type="button" variant="outline" onClick={handleCancel}>
                   Cancelar
                 </Button>
               </div>
@@ -236,61 +231,53 @@ const CadastroFuncionarios = ({ user }) => {
         </Card>
       )}
 
-      {/* Lista de Funcionários */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {funcionarios.map((funcionario) => (
-          <Card key={funcionario.id}>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">{funcionario.nome}</CardTitle>
-                <div className="flex space-x-1">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleEdit(funcionario)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleDelete(funcionario.id)}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="space-y-2 text-sm text-gray-600">
-                <p><strong>Loja:</strong> {getLojaName(funcionario.loja_id)}</p>
-                <p><strong>Cargo:</strong> {funcionario.cargo === 'gerente' ? 'Gerente' : 'Operador'}</p>
-                <p><strong>Meta Mensal:</strong> R$ {funcionario.meta_mensal?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}</p>
-                <p><strong>Status:</strong> 
-                  <span className={`ml-1 px-2 py-1 rounded-full text-xs ${
-                    funcionario.ativo !== false ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                  }`}>
-                    {funcionario.ativo !== false ? 'Ativo' : 'Inativo'}
-                  </span>
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {funcionarios.length === 0 && (
-        <Card>
-          <CardContent className="text-center py-8">
-            <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500">Nenhum funcionário cadastrado ainda.</p>
-            <p className="text-sm text-gray-400 mt-2">
-              Clique em "Novo Funcionário" para começar.
+      <Card>
+        <CardHeader>
+          <CardTitle>Funcionários Cadastrados</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {funcionarios.length === 0 ? (
+            <p className="text-gray-500 text-center py-4">
+              Nenhum funcionário cadastrado. Clique em "Novo Funcionário" para começar.
             </p>
-          </CardContent>
-        </Card>
-      )}
+          ) : (
+            <div className="space-y-4">
+              {funcionarios.map((funcionario) => (
+                <div key={funcionario.id} className="border rounded-lg p-4 flex justify-between items-start">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-lg">{funcionario.nome}</h3>
+                    <div className="flex gap-4 mt-2 text-sm text-gray-600">
+                      <span>🏪 {getLojaName(funcionario.loja_id)}</span>
+                      <span>👤 {funcionario.cargo}</span>
+                      <span>🎯 R$ {funcionario.meta_mensal?.toFixed(2) || '0,00'}</span>
+                      <span className={funcionario.ativo ? 'text-green-600' : 'text-red-600'}>
+                        {funcionario.ativo ? '✅ Ativo' : '❌ Inativo'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEdit(funcionario)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDelete(funcionario.id)}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };

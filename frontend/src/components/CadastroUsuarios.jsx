@@ -69,7 +69,12 @@ const CadastroUsuarios = ({ user }) => {
 
     try {
       const token = localStorage.getItem('token');
-      const url = editingUser ? `/api/usuarios/${editingUser.id}` : '/api/register';
+      const dataToSend = {
+        ...formData,
+        loja_id: formData.tipo === 'gerente' ? parseInt(formData.loja_id) : null
+      };
+
+      const url = editingUser ? `/api/usuarios/${editingUser.id}` : '/api/usuarios';
       const method = editingUser ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
@@ -78,10 +83,8 @@ const CadastroUsuarios = ({ user }) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(dataToSend)
       });
-
-      const data = await response.json();
 
       if (response.ok) {
         setSuccess(editingUser ? 'Usuário atualizado com sucesso!' : 'Usuário criado com sucesso!');
@@ -96,10 +99,12 @@ const CadastroUsuarios = ({ user }) => {
         });
         fetchUsuarios();
       } else {
-        setError(data.message || 'Erro ao salvar usuário');
+        const errorData = await response.json();
+        setError(errorData.message || 'Erro ao salvar usuário');
       }
     } catch (error) {
-      setError('Erro de conexão. Tente novamente.');
+      console.error('Erro ao salvar usuário:', error);
+      setError('Erro ao salvar usuário. Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -108,59 +113,95 @@ const CadastroUsuarios = ({ user }) => {
   const handleEdit = (usuario) => {
     setEditingUser(usuario);
     setFormData({
-      nome: usuario.nome,
-      email: usuario.email,
-      senha: '',
-      tipo: usuario.tipo,
-      loja_id: usuario.loja_id || ''
+      nome: usuario.nome || '',
+      email: usuario.email || '',
+      senha: '', // Não preencher senha por segurança
+      tipo: usuario.tipo || 'gerente',
+      loja_id: usuario.loja_id?.toString() || ''
     });
     setShowForm(true);
   };
 
-  const handleChange = (name, value) => {
-    setFormData({
-      ...formData,
-      [name]: value
-    });
+  const handleDelete = async (id) => {
+    if (window.confirm('Tem certeza que deseja excluir este usuário?')) {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/usuarios/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          setSuccess('Usuário excluído com sucesso!');
+          fetchUsuarios();
+        } else {
+          setError('Erro ao excluir usuário');
+        }
+      } catch (error) {
+        console.error('Erro ao excluir usuário:', error);
+        setError('Erro ao excluir usuário. Tente novamente.');
+      }
+    }
   };
 
+  const handleCancel = () => {
+    setShowForm(false);
+    setEditingUser(null);
+    setFormData({
+      nome: '',
+      email: '',
+      senha: '',
+      tipo: 'gerente',
+      loja_id: ''
+    });
+    setError('');
+    setSuccess('');
+  };
+
+  const getLojaName = (lojaId) => {
+    const loja = lojas.find(l => l.id === lojaId);
+    return loja ? loja.nome : 'N/A';
+  };
+
+  // Verificar se usuário é admin
   if (user?.tipo !== 'admin') {
     return (
-      <div className="p-6">
-        <Alert>
-          <AlertDescription>
-            Acesso negado. Apenas administradores podem gerenciar usuários.
-          </AlertDescription>
-        </Alert>
+      <div className="text-center py-8">
+        <p className="text-gray-500">Acesso restrito a administradores.</p>
       </div>
     );
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
+          <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <Users className="h-6 w-6" />
             Gerenciar Usuários
-          </h1>
-          <p className="text-gray-600">Cadastre e gerencie usuários do sistema</p>
+          </h2>
+          <p className="text-gray-600 mt-1">Cadastre e gerencie usuários do sistema</p>
         </div>
-        <Button onClick={() => setShowForm(true)}>
-          <Plus className="h-4 w-4 mr-2" />
+        <Button 
+          onClick={() => setShowForm(true)}
+          className="flex items-center gap-2"
+        >
+          <Plus className="h-4 w-4" />
           Novo Usuário
         </Button>
       </div>
 
       {error && (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
+        <Alert className="border-red-200 bg-red-50">
+          <AlertDescription className="text-red-800">{error}</AlertDescription>
         </Alert>
       )}
 
       {success && (
-        <Alert>
-          <AlertDescription>{success}</AlertDescription>
+        <Alert className="border-green-200 bg-green-50">
+          <AlertDescription className="text-green-800">{success}</AlertDescription>
         </Alert>
       )}
 
@@ -171,49 +212,51 @@ const CadastroUsuarios = ({ user }) => {
               {editingUser ? 'Editar Usuário' : 'Novo Usuário'}
             </CardTitle>
             <CardDescription>
-              {editingUser ? 'Atualize as informações do usuário' : 'Preencha os dados do novo usuário'}
+              Preencha os dados do novo usuário
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
+                <div>
                   <Label htmlFor="nome">Nome</Label>
                   <Input
                     id="nome"
                     value={formData.nome}
-                    onChange={(e) => handleChange('nome', e.target.value)}
+                    onChange={(e) => setFormData({...formData, nome: e.target.value})}
                     required
                   />
                 </div>
-
-                <div className="space-y-2">
+                <div>
                   <Label htmlFor="email">Email</Label>
                   <Input
                     id="email"
                     type="email"
                     value={formData.email}
-                    onChange={(e) => handleChange('email', e.target.value)}
+                    onChange={(e) => setFormData({...formData, email: e.target.value})}
                     required
                   />
                 </div>
+              </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="senha">
-                    Senha {editingUser && '(deixe em branco para manter)'}
-                  </Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="senha">Senha</Label>
                   <Input
                     id="senha"
                     type="password"
                     value={formData.senha}
-                    onChange={(e) => handleChange('senha', e.target.value)}
+                    onChange={(e) => setFormData({...formData, senha: e.target.value})}
                     required={!editingUser}
+                    placeholder={editingUser ? "Deixe em branco para manter a atual" : ""}
                   />
                 </div>
-
-                <div className="space-y-2">
+                <div>
                   <Label htmlFor="tipo">Tipo de Usuário</Label>
-                  <Select value={formData.tipo} onValueChange={(value) => handleChange('tipo', value)}>
+                  <Select 
+                    value={formData.tipo} 
+                    onValueChange={(value) => setFormData({...formData, tipo: value, loja_id: value === 'admin' ? '' : formData.loja_id})}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -223,45 +266,34 @@ const CadastroUsuarios = ({ user }) => {
                     </SelectContent>
                   </Select>
                 </div>
-
-                {formData.tipo === 'gerente' && (
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="loja_id">Loja (para gerentes)</Label>
-                    <Select value={formData.loja_id} onValueChange={(value) => handleChange('loja_id', value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione uma loja" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {lojas.map((loja) => (
-                          <SelectItem key={loja.id} value={loja.id.toString()}>
-                            {loja.nome}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
               </div>
+
+              {formData.tipo === 'gerente' && (
+                <div>
+                  <Label htmlFor="loja">Loja (para gerentes)</Label>
+                  <Select 
+                    value={formData.loja_id} 
+                    onValueChange={(value) => setFormData({...formData, loja_id: value})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione uma loja" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {lojas.map((loja) => (
+                        <SelectItem key={loja.id} value={loja.id.toString()}>
+                          {loja.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <div className="flex gap-2">
                 <Button type="submit" disabled={loading}>
                   {loading ? 'Salvando...' : 'Salvar'}
                 </Button>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => {
-                    setShowForm(false);
-                    setEditingUser(null);
-                    setFormData({
-                      nome: '',
-                      email: '',
-                      senha: '',
-                      tipo: 'gerente',
-                      loja_id: ''
-                    });
-                  }}
-                >
+                <Button type="button" variant="outline" onClick={handleCancel}>
                   Cancelar
                 </Button>
               </div>
@@ -275,60 +307,47 @@ const CadastroUsuarios = ({ user }) => {
           <CardTitle>Usuários Cadastrados</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left p-2">Nome</th>
-                  <th className="text-left p-2">Email</th>
-                  <th className="text-left p-2">Tipo</th>
-                  <th className="text-left p-2">Loja</th>
-                  <th className="text-left p-2">Status</th>
-                  <th className="text-left p-2">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {usuarios.map((usuario) => (
-                  <tr key={usuario.id} className="border-b">
-                    <td className="p-2">{usuario.nome}</td>
-                    <td className="p-2">{usuario.email}</td>
-                    <td className="p-2">
-                      <span className={`px-2 py-1 rounded text-xs ${
-                        usuario.tipo === 'admin' 
-                          ? 'bg-red-100 text-red-800' 
-                          : 'bg-blue-100 text-blue-800'
-                      }`}>
-                        {usuario.tipo === 'admin' ? 'Administrador' : 'Gerente'}
-                      </span>
-                    </td>
-                    <td className="p-2">
-                      {usuario.lojas?.nome || '-'}
-                    </td>
-                    <td className="p-2">
-                      <span className={`px-2 py-1 rounded text-xs ${
-                        usuario.ativo 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {usuario.ativo ? 'Ativo' : 'Inativo'}
-                      </span>
-                    </td>
-                    <td className="p-2">
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleEdit(usuario)}
-                        >
-                          <Edit className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          {usuarios.length === 0 ? (
+            <p className="text-gray-500 text-center py-4">
+              Nenhum usuário cadastrado. Clique em "Novo Usuário" para começar.
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {usuarios.map((usuario) => (
+                <div key={usuario.id} className="border rounded-lg p-4 flex justify-between items-start">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-lg">{usuario.nome}</h3>
+                    <div className="flex gap-4 mt-2 text-sm text-gray-600">
+                      <span>📧 {usuario.email}</span>
+                      <span>👤 {usuario.tipo === 'admin' ? 'Administrador' : 'Gerente'}</span>
+                      {usuario.tipo === 'gerente' && usuario.loja_id && (
+                        <span>🏪 {getLojaName(usuario.loja_id)}</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEdit(usuario)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    {usuario.id !== user?.id && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDelete(usuario.id)}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

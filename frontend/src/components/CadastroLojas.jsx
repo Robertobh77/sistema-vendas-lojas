@@ -29,7 +29,7 @@ const CadastroLojas = ({ user }) => {
       const response = await api.get('/api/lojas');
       setLojas(response.data);
     } catch (error) {
-      console.error('Erro ao carregar lojas:', error);
+      console.error('Erro ao buscar lojas:', error);
     }
   };
 
@@ -44,8 +44,16 @@ const CadastroLojas = ({ user }) => {
         await api.post('/api/lojas', formData);
       }
       
-      await fetchLojas();
-      resetForm();
+      setShowForm(false);
+      setEditingLoja(null);
+      setFormData({
+        nome: '',
+        endereco: '',
+        telefone: '',
+        email: '',
+        observacoes: ''
+      });
+      fetchLojas();
     } catch (error) {
       console.error('Erro ao salvar loja:', error);
       alert('Erro ao salvar loja. Tente novamente.');
@@ -57,7 +65,7 @@ const CadastroLojas = ({ user }) => {
   const handleEdit = (loja) => {
     setEditingLoja(loja);
     setFormData({
-      nome: loja.nome,
+      nome: loja.nome || '',
       endereco: loja.endereco || '',
       telefone: loja.telefone || '',
       email: loja.email || '',
@@ -67,18 +75,20 @@ const CadastroLojas = ({ user }) => {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Tem certeza que deseja excluir esta loja?')) return;
-
-    try {
-      await api.delete(`/api/lojas/${id}`);
-      await fetchLojas();
-    } catch (error) {
-      console.error('Erro ao excluir loja:', error);
-      alert('Erro ao excluir loja. Verifique se não há funcionários associados.');
+    if (window.confirm('Tem certeza que deseja excluir esta loja?')) {
+      try {
+        await api.delete(`/api/lojas/${id}`);
+        fetchLojas();
+      } catch (error) {
+        console.error('Erro ao excluir loja:', error);
+        alert('Erro ao excluir loja. Tente novamente.');
+      }
     }
   };
 
-  const resetForm = () => {
+  const handleCancel = () => {
+    setShowForm(false);
+    setEditingLoja(null);
     setFormData({
       nome: '',
       endereco: '',
@@ -86,31 +96,27 @@ const CadastroLojas = ({ user }) => {
       email: '',
       observacoes: ''
     });
-    setEditingLoja(null);
-    setShowForm(false);
-  };
-
-  const handleInputChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <Store className="h-6 w-6 text-blue-600" />
-          <h2 className="text-2xl font-bold text-gray-900">Cadastro de Lojas</h2>
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <Store className="h-6 w-6" />
+            Cadastro de Lojas
+          </h2>
+          <p className="text-gray-600 mt-1">Gerencie as lojas do sistema</p>
         </div>
-        <Button onClick={() => setShowForm(true)} className="flex items-center space-x-2">
+        <Button 
+          onClick={() => setShowForm(true)}
+          className="flex items-center gap-2"
+        >
           <Plus className="h-4 w-4" />
-          <span>Nova Loja</span>
+          Nova Loja
         </Button>
       </div>
 
-      {/* Formulário */}
       {showForm && (
         <Card>
           <CardHeader>
@@ -125,10 +131,8 @@ const CadastroLojas = ({ user }) => {
                   <Label htmlFor="nome">Nome da Loja *</Label>
                   <Input
                     id="nome"
-                    name="nome"
                     value={formData.nome}
-                    onChange={handleInputChange}
-                    placeholder="Ex: Loja Barão"
+                    onChange={(e) => setFormData({...formData, nome: e.target.value})}
                     required
                   />
                 </div>
@@ -136,10 +140,8 @@ const CadastroLojas = ({ user }) => {
                   <Label htmlFor="telefone">Telefone</Label>
                   <Input
                     id="telefone"
-                    name="telefone"
                     value={formData.telefone}
-                    onChange={handleInputChange}
-                    placeholder="(31) 99999-9999"
+                    onChange={(e) => setFormData({...formData, telefone: e.target.value})}
                   />
                 </div>
               </div>
@@ -148,22 +150,18 @@ const CadastroLojas = ({ user }) => {
                 <Label htmlFor="endereco">Endereço</Label>
                 <Input
                   id="endereco"
-                  name="endereco"
                   value={formData.endereco}
-                  onChange={handleInputChange}
-                  placeholder="Rua, número, bairro, cidade"
+                  onChange={(e) => setFormData({...formData, endereco: e.target.value})}
                 />
               </div>
 
               <div>
-                <Label htmlFor="email">E-mail</Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
-                  name="email"
                   type="email"
                   value={formData.email}
-                  onChange={handleInputChange}
-                  placeholder="loja@exemplo.com"
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
                 />
               </div>
 
@@ -171,19 +169,17 @@ const CadastroLojas = ({ user }) => {
                 <Label htmlFor="observacoes">Observações</Label>
                 <Textarea
                   id="observacoes"
-                  name="observacoes"
                   value={formData.observacoes}
-                  onChange={handleInputChange}
-                  placeholder="Informações adicionais sobre a loja"
+                  onChange={(e) => setFormData({...formData, observacoes: e.target.value})}
                   rows={3}
                 />
               </div>
 
-              <div className="flex space-x-2">
+              <div className="flex gap-2">
                 <Button type="submit" disabled={loading}>
-                  {loading ? 'Salvando...' : (editingLoja ? 'Atualizar' : 'Salvar')}
+                  {loading ? 'Salvando...' : 'Salvar'}
                 </Button>
-                <Button type="button" variant="outline" onClick={resetForm}>
+                <Button type="button" variant="outline" onClick={handleCancel}>
                   Cancelar
                 </Button>
               </div>
@@ -192,63 +188,55 @@ const CadastroLojas = ({ user }) => {
         </Card>
       )}
 
-      {/* Lista de Lojas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {lojas.map((loja) => (
-          <Card key={loja.id}>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">{loja.nome}</CardTitle>
-                <div className="flex space-x-1">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleEdit(loja)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleDelete(loja.id)}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="space-y-2 text-sm text-gray-600">
-                {loja.endereco && (
-                  <p><strong>Endereço:</strong> {loja.endereco}</p>
-                )}
-                {loja.telefone && (
-                  <p><strong>Telefone:</strong> {loja.telefone}</p>
-                )}
-                {loja.email && (
-                  <p><strong>E-mail:</strong> {loja.email}</p>
-                )}
-                {loja.observacoes && (
-                  <p><strong>Observações:</strong> {loja.observacoes}</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {lojas.length === 0 && (
-        <Card>
-          <CardContent className="text-center py-8">
-            <Store className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500">Nenhuma loja cadastrada ainda.</p>
-            <p className="text-sm text-gray-400 mt-2">
-              Clique em "Nova Loja" para começar.
+      <Card>
+        <CardHeader>
+          <CardTitle>Lojas Cadastradas</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {lojas.length === 0 ? (
+            <p className="text-gray-500 text-center py-4">
+              Nenhuma loja cadastrada. Clique em "Nova Loja" para começar.
             </p>
-          </CardContent>
-        </Card>
-      )}
+          ) : (
+            <div className="space-y-4">
+              {lojas.map((loja) => (
+                <div key={loja.id} className="border rounded-lg p-4 flex justify-between items-start">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-lg">{loja.nome}</h3>
+                    {loja.endereco && (
+                      <p className="text-gray-600 text-sm">{loja.endereco}</p>
+                    )}
+                    <div className="flex gap-4 mt-2 text-sm text-gray-500">
+                      {loja.telefone && <span>📞 {loja.telefone}</span>}
+                      {loja.email && <span>📧 {loja.email}</span>}
+                    </div>
+                    {loja.observacoes && (
+                      <p className="text-gray-600 text-sm mt-2">{loja.observacoes}</p>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEdit(loja)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDelete(loja.id)}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };
