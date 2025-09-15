@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Users, Edit, Trash2 } from 'lucide-react';
-import { api } from '../lib/api';
+import { operadoresAPI, lojasAPI } from '../lib/api';
 
 const CadastroFuncionarios = ({ user }) => {
   const [funcionarios, setFuncionarios] = useState([]);
@@ -28,7 +28,7 @@ const CadastroFuncionarios = ({ user }) => {
 
   const fetchFuncionarios = async () => {
     try {
-      const response = await api.get('/api/operadores');
+      const response = await operadoresAPI.getAll();
       setFuncionarios(response.data);
     } catch (error) {
       console.error('Erro ao carregar funcionários:', error);
@@ -37,7 +37,7 @@ const CadastroFuncionarios = ({ user }) => {
 
   const fetchLojas = async () => {
     try {
-      const response = await api.get('/api/lojas');
+      const response = await lojasAPI.getAll();
       setLojas(response.data);
     } catch (error) {
       console.error('Erro ao carregar lojas:', error);
