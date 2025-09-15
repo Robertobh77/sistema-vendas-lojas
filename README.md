@@ -187,3 +187,4 @@ Para dúvidas ou suporte, entre em contato através dos issues do GitHub.
 
 **Desenvolvido com ❤️ para otimizar o acompanhamento de vendas das lojas**
 
+# Deploy forçado Mon Sep 15 10:29:27 EDT 2025
