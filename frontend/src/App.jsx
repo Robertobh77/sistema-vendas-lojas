@@ -16,21 +16,41 @@ function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
 
   useEffect(() => {
-    // Verificar se há token salvo
-    const token = localStorage.getItem('token');
-    const savedUser = localStorage.getItem('user');
-    
-    if (token && savedUser) {
+    // Verificar se há token salvo e validar com a API
+    const validateToken = async () => {
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+      
       try {
-        const userData = JSON.parse(savedUser);
-        setUser(userData);
+        // Validar token fazendo requisição à API
+        const response = await fetch('/api/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (response.ok) {
+          const userData = await response.json();
+          setUser(userData);
+        } else {
+          // Token inválido, limpar localStorage
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+        }
       } catch (error) {
+        console.error('Erro ao validar token:', error);
         localStorage.removeItem('token');
         localStorage.removeItem('user');
       }
-    }
+      
+      setLoading(false);
+    };
     
-    setLoading(false);
+    validateToken();
   }, []);
 
   const handleLogin = (userData) => {
