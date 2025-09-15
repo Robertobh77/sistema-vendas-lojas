@@ -19,7 +19,7 @@ const CadastroFuncionariosSimples = () => {
 
   const fetchLojas = async () => {
     try {
-      const response = await fetch('/api/lojas');
+      const response = await fetch('/api/lojas/simples');
       if (response.ok) {
         const data = await response.json();
         setLojas(data);

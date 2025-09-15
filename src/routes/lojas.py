@@ -1,9 +1,18 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, request, jsonify
 from src.database import get_supabase_client
 from src.routes.auth import token_required
 
 lojas_bp = Blueprint('lojas', __name__)
 supabase = get_supabase_client()
+
+@lojas_bp.route('/lojas/simples', methods=['GET'])
+def get_lojas_simples():
+    """Retorna lista simples de lojas (sem autenticação) - FASE 1"""
+    try:
+        lojas_response = supabase.table("lojas").select("id, nome").execute()
+        return jsonify(lojas_response.data), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @lojas_bp.route('/lojas', methods=['GET'])
 @token_required
