@@ -33,7 +33,7 @@ const CadastroUsuariosNovo = () => {
 
   const fetchUsuarios = async () => {
     try {
-      const response = await fetch('/api/users');
+      const response = await fetch('/api/usuarios');
       if (response.ok) {
         const data = await response.json();
         setUsuarios(data.filter(u => u.tipo !== 'admin')); // Não mostrar admin
@@ -83,7 +83,7 @@ const CadastroUsuariosNovo = () => {
     if (!confirm('Tem certeza que deseja excluir este usuário?')) return;
 
     try {
-      const response = await fetch(`/api/users/${userId}`, {
+      const response = await fetch(`/api/usuarios/${userId}`, {
         method: 'DELETE'
       });
 
@@ -313,7 +313,7 @@ const CadastroUsuariosNovo = () => {
                       📧 {usuario.email}
                     </p>
                     <p style={{ margin: 0, color: '#666' }}>
-                      🏪 {usuario.loja_nome || 'Loja não definida'}
+                      🏪 {usuario.lojas?.nome || 'Loja não definida'}
                     </p>
                   </div>
                   
