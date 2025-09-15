@@ -135,7 +135,7 @@ def upload_csv_simples():
                 
                 # Inserir venda
                 venda_data = {
-                    "data": data_iso,
+                    "data_venda": data_iso,
                     "operador_id": funcionario['id'],
                     "loja_id": None,  # Será preenchido pela trigger ou deixar None
                     "valor_custo": valor_custo,
