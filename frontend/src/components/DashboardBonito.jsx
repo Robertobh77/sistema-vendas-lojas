@@ -84,6 +84,17 @@ const DashboardBonito = () => {
     ? dados.funcionarios.filter(f => f.loja_nome === filtroLoja)
     : dados.funcionarios;
 
+  // Recalcular resumo baseado no filtro
+  const resumoFiltrado = {
+    totalVendas: funcionariosFiltrados.reduce((sum, f) => sum + (f.vendas_total || 0), 0),
+    totalFuncionarios: funcionariosFiltrados.length,
+    metaTotal: funcionariosFiltrados.reduce((sum, f) => sum + (f.meta_mensal || 0), 0),
+    percentualGeral: 0
+  };
+  resumoFiltrado.percentualGeral = resumoFiltrado.metaTotal > 0 
+    ? (resumoFiltrado.totalVendas / resumoFiltrado.metaTotal) * 100 
+    : 0;
+
   if (loading) {
     return (
       <div style={{
@@ -158,68 +169,140 @@ const DashboardBonito = () => {
       {/* Cards de Resumo */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-        gap: '20px',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+        gap: '25px',
         marginBottom: '40px'
       }}>
         <div style={{
           background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
           color: 'white',
-          padding: '25px',
-          borderRadius: '15px',
-          boxShadow: '0 8px 25px rgba(0,0,0,0.1)',
-          textAlign: 'center'
+          padding: '30px',
+          borderRadius: '20px',
+          boxShadow: '0 15px 35px rgba(102, 126, 234, 0.3)',
+          textAlign: 'center',
+          position: 'relative',
+          overflow: 'hidden'
         }}>
-          <div style={{ fontSize: '36px', marginBottom: '10px' }}>💰</div>
-          <h3 style={{ margin: '0 0 10px 0', fontSize: '18px' }}>Total de Vendas</h3>
-          <p style={{ margin: 0, fontSize: '24px', fontWeight: 'bold' }}>
-            {formatarMoeda(dados.resumo.totalVendas)}
+          <div style={{
+            position: 'absolute',
+            top: '-50px',
+            right: '-50px',
+            width: '100px',
+            height: '100px',
+            background: 'rgba(255,255,255,0.1)',
+            borderRadius: '50%'
+          }} />
+          <div style={{ fontSize: '48px', marginBottom: '15px' }}>💰</div>
+          <h3 style={{ margin: '0 0 15px 0', fontSize: '20px', fontWeight: '600' }}>Total de Vendas</h3>
+          <p style={{ margin: 0, fontSize: '28px', fontWeight: 'bold' }}>
+            {formatarMoeda(resumoFiltrado.totalVendas)}
           </p>
+          <div style={{ 
+            marginTop: '10px', 
+            fontSize: '14px', 
+            opacity: 0.9 
+          }}>
+            {filtroLoja ? `Loja: ${filtroLoja}` : 'Todas as lojas'}
+          </div>
         </div>
 
         <div style={{
           background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
           color: 'white',
-          padding: '25px',
-          borderRadius: '15px',
-          boxShadow: '0 8px 25px rgba(0,0,0,0.1)',
-          textAlign: 'center'
+          padding: '30px',
+          borderRadius: '20px',
+          boxShadow: '0 15px 35px rgba(240, 147, 251, 0.3)',
+          textAlign: 'center',
+          position: 'relative',
+          overflow: 'hidden'
         }}>
-          <div style={{ fontSize: '36px', marginBottom: '10px' }}>👥</div>
-          <h3 style={{ margin: '0 0 10px 0', fontSize: '18px' }}>Funcionários</h3>
-          <p style={{ margin: 0, fontSize: '24px', fontWeight: 'bold' }}>
-            {funcionariosFiltrados.length}
+          <div style={{
+            position: 'absolute',
+            top: '-50px',
+            right: '-50px',
+            width: '100px',
+            height: '100px',
+            background: 'rgba(255,255,255,0.1)',
+            borderRadius: '50%'
+          }} />
+          <div style={{ fontSize: '48px', marginBottom: '15px' }}>👥</div>
+          <h3 style={{ margin: '0 0 15px 0', fontSize: '20px', fontWeight: '600' }}>Funcionários Ativos</h3>
+          <p style={{ margin: 0, fontSize: '28px', fontWeight: 'bold' }}>
+            {resumoFiltrado.totalFuncionarios}
           </p>
+          <div style={{ 
+            marginTop: '10px', 
+            fontSize: '14px', 
+            opacity: 0.9 
+          }}>
+            {filtroLoja ? `Loja: ${filtroLoja}` : 'Todas as lojas'}
+          </div>
         </div>
 
         <div style={{
           background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
           color: 'white',
-          padding: '25px',
-          borderRadius: '15px',
-          boxShadow: '0 8px 25px rgba(0,0,0,0.1)',
-          textAlign: 'center'
+          padding: '30px',
+          borderRadius: '20px',
+          boxShadow: '0 15px 35px rgba(79, 172, 254, 0.3)',
+          textAlign: 'center',
+          position: 'relative',
+          overflow: 'hidden'
         }}>
-          <div style={{ fontSize: '36px', marginBottom: '10px' }}>🎯</div>
-          <h3 style={{ margin: '0 0 10px 0', fontSize: '18px' }}>Meta Total</h3>
-          <p style={{ margin: 0, fontSize: '24px', fontWeight: 'bold' }}>
-            {formatarMoeda(dados.resumo.metaTotal)}
+          <div style={{
+            position: 'absolute',
+            top: '-50px',
+            right: '-50px',
+            width: '100px',
+            height: '100px',
+            background: 'rgba(255,255,255,0.1)',
+            borderRadius: '50%'
+          }} />
+          <div style={{ fontSize: '48px', marginBottom: '15px' }}>🎯</div>
+          <h3 style={{ margin: '0 0 15px 0', fontSize: '20px', fontWeight: '600' }}>Meta Total</h3>
+          <p style={{ margin: 0, fontSize: '28px', fontWeight: 'bold' }}>
+            {formatarMoeda(resumoFiltrado.metaTotal)}
           </p>
+          <div style={{ 
+            marginTop: '10px', 
+            fontSize: '14px', 
+            opacity: 0.9 
+          }}>
+            {filtroLoja ? `Loja: ${filtroLoja}` : 'Todas as lojas'}
+          </div>
         </div>
 
         <div style={{
           background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
           color: 'white',
-          padding: '25px',
-          borderRadius: '15px',
-          boxShadow: '0 8px 25px rgba(0,0,0,0.1)',
-          textAlign: 'center'
+          padding: '30px',
+          borderRadius: '20px',
+          boxShadow: '0 15px 35px rgba(67, 233, 123, 0.3)',
+          textAlign: 'center',
+          position: 'relative',
+          overflow: 'hidden'
         }}>
-          <div style={{ fontSize: '36px', marginBottom: '10px' }}>📈</div>
-          <h3 style={{ margin: '0 0 10px 0', fontSize: '18px' }}>Performance Geral</h3>
-          <p style={{ margin: 0, fontSize: '24px', fontWeight: 'bold' }}>
-            {dados.resumo.percentualGeral.toFixed(1)}%
+          <div style={{
+            position: 'absolute',
+            top: '-50px',
+            right: '-50px',
+            width: '100px',
+            height: '100px',
+            background: 'rgba(255,255,255,0.1)',
+            borderRadius: '50%'
+          }} />
+          <div style={{ fontSize: '48px', marginBottom: '15px' }}>📈</div>
+          <h3 style={{ margin: '0 0 15px 0', fontSize: '20px', fontWeight: '600' }}>Performance</h3>
+          <p style={{ margin: 0, fontSize: '28px', fontWeight: 'bold' }}>
+            {resumoFiltrado.percentualGeral.toFixed(1)}%
           </p>
+          <div style={{ 
+            marginTop: '10px', 
+            fontSize: '14px', 
+            opacity: 0.9 
+          }}>
+            {getStatusText(resumoFiltrado.percentualGeral)}
+          </div>
         </div>
       </div>
 
