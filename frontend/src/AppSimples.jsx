@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import CadastroFuncionariosSimples from './components/CadastroFuncionariosSimples';
+import ImportacaoCSVSimples from './components/ImportacaoCSVSimples';
 
 const AppSimples = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('funcionarios');
   const [loginData, setLoginData] = useState({
     email: 'admin@grandepremioloterias.com.br',
     senha: 'admin123'
@@ -182,8 +184,43 @@ const AppSimples = () => {
         </div>
       </header>
       
+      <nav style={{
+        backgroundColor: '#f8f9fa',
+        padding: '10px 20px',
+        borderBottom: '1px solid #dee2e6'
+      }}>
+        <button
+          onClick={() => setActiveTab('funcionarios')}
+          style={{
+            backgroundColor: activeTab === 'funcionarios' ? '#007bff' : 'transparent',
+            color: activeTab === 'funcionarios' ? 'white' : '#007bff',
+            border: '1px solid #007bff',
+            padding: '8px 16px',
+            marginRight: '10px',
+            borderRadius: '4px',
+            cursor: 'pointer'
+          }}
+        >
+          👥 Funcionários
+        </button>
+        <button
+          onClick={() => setActiveTab('importacao')}
+          style={{
+            backgroundColor: activeTab === 'importacao' ? '#007bff' : 'transparent',
+            color: activeTab === 'importacao' ? 'white' : '#007bff',
+            border: '1px solid #007bff',
+            padding: '8px 16px',
+            borderRadius: '4px',
+            cursor: 'pointer'
+          }}
+        >
+          📁 Importar CSV
+        </button>
+      </nav>
+      
       <main>
-        <CadastroFuncionariosSimples />
+        {activeTab === 'funcionarios' && <CadastroFuncionariosSimples />}
+        {activeTab === 'importacao' && <ImportacaoCSVSimples />}
       </main>
     </div>
   );
